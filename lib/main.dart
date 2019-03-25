@@ -117,9 +117,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           ),
                           onTap: () {
                             _reset = true;
-                            changeValues(mCurrentNumber == widget.mNumberMax
-                                ? 0
-                                : ++mCurrentNumber);
+                            changeValues(
+                                Random().nextInt(widget.mNumberMax + 1));
                             setState(() {});
                           },
                         ),
@@ -182,8 +181,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       fontSize: 28,
                     ),
                   ),
-                  color: position == mCurrentNumber ? Colors.green : Theme.of(context).buttonColor,
-                  textColor: position == mCurrentNumber ? Colors.white : Colors.black,
+                  color: position == mCurrentNumber
+                      ? Colors.green
+                      : Theme.of(context).buttonColor,
+                  textColor:
+                      position == mCurrentNumber ? Colors.white : Colors.black,
                 );
               }),
               spacing: 20,
