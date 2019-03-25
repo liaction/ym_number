@@ -56,6 +56,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   void changeValues(int value) {
+    _reset = true;
     mTargetSuccess = false;
     mCurrentNumber = value;
     mTargetObjects = new List();
@@ -116,7 +117,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                             ),
                           ),
                           onTap: () {
-                            _reset = true;
                             changeValues(
                                 Random().nextInt(widget.mNumberMax + 1));
                             setState(() {});
