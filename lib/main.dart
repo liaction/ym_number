@@ -1,7 +1,6 @@
 import 'dart:math';
 
-import 'package:audioplayers/audio_cache.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ymwy_flutter_font/ymwy_flutter_font.dart';
@@ -55,7 +54,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   bool mDragging = false;
 
   // 播放音频
-  final mPlayer = AudioCache(prefix: "audio/");
+  final mPlayer = AssetsAudioPlayer();
 
   // 是否曾经到达过target
   String mLeavedValue;
@@ -122,7 +121,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   @override
   void dispose() {
-    mPlayer.clearCache();
+    mPlayer.dispose();
     super.dispose();
   }
 
@@ -254,8 +253,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     );
   }
 
-  Future<AudioPlayer> playerAudio(value) {
-    return mPlayer.play("$value.mp3", mode: PlayerMode.LOW_LATENCY);
+  void playerAudio(value) {
+    mPlayer.open(AssetsAudio(asset: "$value.mp3", folder: "assets/audio/"));
   }
 
   Future _showSelect() async {
@@ -353,15 +352,15 @@ class TargetObject extends StatefulWidget {
 class _TargetObjectState extends State<TargetObject> {
   bool accept = false;
 
-  final mPlayer = AudioCache(prefix: "audio/");
+  final mPlayer = AssetsAudioPlayer();
 
-  Future<AudioPlayer> playerAudio(value) {
-    return mPlayer.play("$value.mp3", mode: PlayerMode.LOW_LATENCY);
+  void playerAudio(value) {
+    mPlayer.open(AssetsAudio(asset: "$value.mp3", folder: "assets/audio/"));
   }
 
   @override
   void dispose() {
-    mPlayer.clearCache();
+    mPlayer.dispose();
     super.dispose();
   }
 

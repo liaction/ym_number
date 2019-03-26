@@ -26,8 +26,8 @@ dependencies:
   ymwy_flutter_font:
     git:
       url: git://github.com/liaction/ymwy_flutter_font.git
-  audioplayers: 0.10.1
-#  assets_audio_player: 1.0.1
+#  audioplayers: 0.10.1
+  assets_audio_player: 1.0.1
 
 dev_dependencies:
   flutter_test:
