@@ -14,6 +14,7 @@
 *.ipr
 *.iws
 .idea/
+.gradle
 
 # Visual Studio Code related
 .vscode/

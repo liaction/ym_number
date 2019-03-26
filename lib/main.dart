@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ymwy_flutter_font/ymwy_flutter_font.dart';
 
 void main() => runApp(MyApp());
 
@@ -48,6 +49,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   // 是否移动到target
   bool mTargetSuccess = false;
 
+  // 是否在dragging
+  bool mDragging = false;
+
   @override
   void initState() {
     SystemChrome.setEnabledSystemUIOverlays([]);
@@ -64,7 +68,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     mTargetPosition = random.nextInt(widget.mCount);
     mCurrentTargetObject = TargetObject(
       name: "$mCurrentNumber",
-      backgroundColor: Colors.red,
+      backgroundColor: const LinearGradient(
+        colors: [
+          Colors.deepOrangeAccent,
+          Colors.deepOrange,
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
     );
     // 生成 mCount-1 个不同数字,因为当前数字已经知道了,所以只需要知道其他随便几个数字即可
     // 循环产生数字,直到数组长度达到mCount-1
@@ -101,61 +112,115 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         padding: EdgeInsets.symmetric(
           vertical: 10,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: <Color>[
+              Colors.blue,
+              Colors.blue,
+              Colors.lightBlue,
+              Colors.lightBlue,
+              Colors.blue,
+              Colors.blue,
+              Colors.lightBlue,
+              Colors.lightBlue,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Stack(
           children: <Widget>[
-            mTargetSuccess
-                ? Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        GestureDetector(
-                          child: Text(
-                            "👍",
-                            style: TextStyle(
-                              fontSize: MediaQuery.of(context).size.width / 6,
-                            ),
-                          ),
-                          onTap: () {
-                            changeValues(
-                                Random().nextInt(widget.mNumberMax + 1));
-                            setState(() {});
-                          },
-                        ),
-                        Text(
-                          "点击小手进行下一关",
-                          style: TextStyle(
-                            fontSize: 28,
-                            color: Colors.blueGrey,
-                          ),
-                        ),
-                      ],
-                    ),
-                    flex: 1,
-                  )
-                : Draggable(
-                    child: mCurrentTargetObject,
-                    feedback: mCurrentTargetObject,
-                    childWhenDragging: Container(),
-                    data: mCurrentNumber.toString(),
-                  ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                FloatingActionButton(
-                  onPressed: _showSelect,
-                  child: Icon(
-                    Icons.local_airport,
-                    color: Colors.white,
-                  ),
+                mTargetSuccess
+                    ? Expanded(
+                        child: Stack(
+                          children: <Widget>[
+                            Align(
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: <Widget>[
+                                  IconButton(
+                                    icon: Icon(YMWYFont.faLabelThumbsUpSolid),
+                                    onPressed: () {
+                                      changeValues(Random()
+                                          .nextInt(widget.mNumberMax + 1));
+                                      setState(() {});
+                                    },
+                                    iconSize:
+                                        MediaQuery.of(context).size.width / 6,
+                                    color: Colors.yellow,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Align(
+                              alignment: AlignmentDirectional.topEnd,
+                              child: Container(
+                                margin: const EdgeInsets.only(
+                                  right: 10,
+                                ),
+                                child: FloatingActionButton(
+                                  onPressed: _showSelect,
+                                  child: Icon(
+                                    Icons.local_airport,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        flex: 1,
+                      )
+                    : Draggable(
+                        child: mCurrentTargetObject,
+                        feedback: mCurrentTargetObject,
+                        childWhenDragging: Container(),
+                        data: mCurrentNumber.toString(),
+                        onDragStarted: () {
+                          setState(() {
+                            mDragging = true;
+                          });
+                        },
+                        onDraggableCanceled: (_, __) {
+                          setState(() {
+                            mDragging = false;
+                          });
+                        },
+                        onDragCompleted: () {
+                          setState(() {
+                            mDragging = false;
+                          });
+                        },
+                      ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: mTargetObjects.map((targetObject) {
+                    return targetObject;
+                  }).toList(),
                 ),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: mTargetObjects.map((targetObject) {
-                return targetObject;
-              }).toList(),
+            Offstage(
+              offstage: mDragging || mTargetSuccess,
+              child: Align(
+                alignment: AlignmentDirectional.topEnd,
+                child: Container(
+                  margin: const EdgeInsets.only(
+                    right: 10,
+                  ),
+                  child: FloatingActionButton(
+                    onPressed: _showSelect,
+                    child: Icon(
+                      Icons.local_airport,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -167,29 +232,40 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     var result = await showModalBottomSheet(
         context: context,
         builder: (ctx) {
-          return Center(
-            child: Wrap(
-              children:
-                  List<Widget>.generate(widget.mNumberMax + 1, (position) {
-                return RaisedButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop(position);
-                  },
-                  child: Text(
-                    "$position",
-                    style: TextStyle(
-                      fontSize: 28,
-                    ),
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ListView(
+              children: <Widget>[
+                Center(
+                  child: Wrap(
+                    children: List<Widget>.generate(widget.mNumberMax + 1,
+                        (position) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.of(ctx).pop(position);
+                        },
+                        child: CircleAvatar(
+                          radius: MediaQuery.of(context).size.width / 16,
+                          child: Text(
+                            "$position",
+                            style: TextStyle(
+                              fontSize: MediaQuery.of(context).size.width / 16,
+                              color: position == mCurrentNumber
+                                  ? Colors.white
+                                  : Colors.blueGrey,
+                            ),
+                          ),
+                          backgroundColor: position == mCurrentNumber
+                              ? Colors.green
+                              : Theme.of(context).buttonColor,
+                        ),
+                      );
+                    }),
+                    spacing: 20,
+                    runSpacing: 20,
                   ),
-                  color: position == mCurrentNumber
-                      ? Colors.green
-                      : Theme.of(context).buttonColor,
-                  textColor:
-                      position == mCurrentNumber ? Colors.white : Colors.black,
-                );
-              }),
-              spacing: 20,
-              runSpacing: 10,
+                ),
+              ],
             ),
           );
         });
@@ -205,15 +281,29 @@ var _reset = false;
 
 class TargetObject extends StatefulWidget {
   final String name;
-  final Color backgroundColor;
+  final Gradient backgroundColor;
   final VoidCallback onAccept;
-  final Color acceptColor;
+  final Gradient acceptColor;
 
   const TargetObject(
       {Key key,
       @required this.name,
-      this.backgroundColor = Colors.green,
-      this.acceptColor = Colors.red,
+      this.backgroundColor = const LinearGradient(
+        colors: [
+          Colors.green,
+          Colors.lightGreen,
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+      this.acceptColor = const LinearGradient(
+        colors: [
+          Colors.redAccent,
+          Colors.deepOrange,
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
       this.onAccept})
       : super(key: key);
 
@@ -229,10 +319,6 @@ class TargetObject extends StatefulWidget {
 class _TargetObjectState extends State<TargetObject> {
   bool accept = false;
 
-  _TargetObjectState() {
-    debugPrint("------------ 创建了-------");
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_reset) {
@@ -245,10 +331,11 @@ class _TargetObjectState extends State<TargetObject> {
           List<dynamic> rejectedData) {
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(
-              Radius.circular(8),
-            ),
-            color: accept ? widget.acceptColor : widget.backgroundColor,
+            borderRadius: BorderRadius.circular(10000),
+            gradient: accept ? widget.acceptColor : widget.backgroundColor,
+          ),
+          padding: const EdgeInsets.all(
+            10,
           ),
           alignment: Alignment.center,
           width: widthAndHeight,

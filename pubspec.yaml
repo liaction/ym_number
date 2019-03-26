@@ -23,6 +23,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
+  ymwy_flutter_font:
+    git:
+      url: git://github.com/liaction/ymwy_flutter_font.git
 
 dev_dependencies:
   flutter_test:

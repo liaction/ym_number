@@ -142,5 +142,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.8"
+  ymwy_flutter_font:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: HEAD
+      resolved-ref: cef1c96a5ed58820422051450d0ee856ad106430
+      url: "git://github.com/liaction/ymwy_flutter_font.git"
+    source: git
+    version: "0.0.1"
 sdks:
   dart: ">=2.1.0 <3.0.0"
