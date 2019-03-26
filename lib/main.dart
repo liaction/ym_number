@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ymwy_flutter_font/ymwy_flutter_font.dart';
@@ -52,6 +54,12 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   // 是否在dragging
   bool mDragging = false;
 
+  // 播放音频
+  final mPlayer = AudioCache(prefix: "audio/");
+
+  // 是否曾经到达过target
+  String mLeavedValue;
+
   @override
   void initState() {
     SystemChrome.setEnabledSystemUIOverlays([]);
@@ -91,6 +99,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       }
       mTargetObjects.add(TargetObject(
         name: "$position",
+        onLeave: onLeave,
       ));
     }
     // 把目标结果进行设置
@@ -101,9 +110,20 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           onAccept: () {
             setState(() {
               mTargetSuccess = true;
+              playerAudio("winner");
             });
           },
         ));
+  }
+
+  void onLeave(value) {
+    mLeavedValue = value;
+  }
+
+  @override
+  void dispose() {
+    mPlayer.clearCache();
+    super.dispose();
   }
 
   Widget build(BuildContext context) {
@@ -176,24 +196,30 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                         flex: 1,
                       )
                     : Draggable(
-                        child: mCurrentTargetObject,
+                        child: GestureDetector(
+                          onTap: () {
+                            playerAudio(mCurrentTargetObject.name);
+                          },
+                          child: mCurrentTargetObject,
+                        ),
                         feedback: mCurrentTargetObject,
                         childWhenDragging: Container(),
                         data: mCurrentNumber.toString(),
                         onDragStarted: () {
                           setState(() {
                             mDragging = true;
+                            mLeavedValue = null;
                           });
                         },
-                        onDraggableCanceled: (_, __) {
+                        onDragEnd: (_) {
                           setState(() {
                             mDragging = false;
                           });
-                        },
-                        onDragCompleted: () {
-                          setState(() {
-                            mDragging = false;
-                          });
+                          if (mLeavedValue != null) {
+                            final mValue = mLeavedValue;
+                            mLeavedValue = null;
+                            playerAudio("is_$mValue");
+                          }
                         },
                       ),
                 Row(
@@ -226,6 +252,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         ),
       ),
     );
+  }
+
+  Future<AudioPlayer> playerAudio(value) {
+    return mPlayer.play("$value.mp3", mode: PlayerMode.LOW_LATENCY);
   }
 
   Future _showSelect() async {
@@ -279,10 +309,13 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
 var _reset = false;
 
+typedef OnLeaveCallback = void Function(String value);
+
 class TargetObject extends StatefulWidget {
   final String name;
   final Gradient backgroundColor;
   final VoidCallback onAccept;
+  final OnLeaveCallback onLeave;
   final Gradient acceptColor;
 
   const TargetObject(
@@ -304,7 +337,8 @@ class TargetObject extends StatefulWidget {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ),
-      this.onAccept})
+      this.onAccept,
+      this.onLeave})
       : super(key: key);
 
   @override
@@ -319,6 +353,18 @@ class TargetObject extends StatefulWidget {
 class _TargetObjectState extends State<TargetObject> {
   bool accept = false;
 
+  final mPlayer = AudioCache(prefix: "audio/");
+
+  Future<AudioPlayer> playerAudio(value) {
+    return mPlayer.play("$value.mp3", mode: PlayerMode.LOW_LATENCY);
+  }
+
+  @override
+  void dispose() {
+    mPlayer.clearCache();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_reset) {
@@ -329,25 +375,30 @@ class _TargetObjectState extends State<TargetObject> {
     return DragTarget(
       builder: (BuildContext context, List<String> candidateData,
           List<dynamic> rejectedData) {
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10000),
-            gradient: accept ? widget.acceptColor : widget.backgroundColor,
-          ),
-          padding: const EdgeInsets.all(
-            10,
-          ),
-          alignment: Alignment.center,
-          width: widthAndHeight,
-          height: widthAndHeight,
-          child: SizedBox.expand(
-            child: FittedBox(
-              child: Text(
-                widget.name,
-                style: TextStyle(
-                  color: Colors.white,
-                  decoration: TextDecoration.none,
-                  fontWeight: FontWeight.normal,
+        return GestureDetector(
+          onTap: () {
+            playerAudio(widget.name);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10000),
+              gradient: accept ? widget.acceptColor : widget.backgroundColor,
+            ),
+            padding: const EdgeInsets.all(
+              10,
+            ),
+            alignment: Alignment.center,
+            width: widthAndHeight,
+            height: widthAndHeight,
+            child: SizedBox.expand(
+              child: FittedBox(
+                child: Text(
+                  widget.name,
+                  style: TextStyle(
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
+                    fontWeight: FontWeight.normal,
+                  ),
                 ),
               ),
             ),
@@ -355,6 +406,9 @@ class _TargetObjectState extends State<TargetObject> {
         );
       },
       onAccept: (data) {
+        if (data != widget.name && widget.onLeave != null) {
+          widget.onLeave(widget.name);
+        }
         if (data == widget.name && widget.onAccept != null) {
           setState(() {
             accept = true;
@@ -363,6 +417,7 @@ class _TargetObjectState extends State<TargetObject> {
           widget.onAccept();
         }
       },
+      onLeave: (data) {},
     );
   }
 }
